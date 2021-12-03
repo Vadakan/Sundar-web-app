@@ -1,8 +1,9 @@
 package Render
 
 import (
-	"fmt"
+	"bytes"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
 )
@@ -13,25 +14,28 @@ var (
 
 func RenderTemplate(w http.ResponseWriter, tmpl string) {
 
-	_, err := RenderTemplateTest(w)
+	tc, err := CreateTemplateCache(w)
 	if err != nil {
-		fmt.Println("Error in getting the template cache.." + err.Error())
+		log.Fatal(err.Error())
 	}
 
-	parsedTemplate, err := template.ParseFiles("C:/Users/91910/Documents/goworkspace/src/github.com/Webapp-New/templates/" + tmpl)
-
-	if err != nil {
-		fmt.Println("Template parsing error :" + err.Error())
+	t, ok := tc[tmpl]
+	if !ok {
+		log.Fatal(err.Error())
 	}
 
-	err = parsedTemplate.Execute(w, nil)
+	buf := new(bytes.Buffer)
+
+	_ = t.Execute(buf, nil)
+
+	_, err = buf.WriteTo(w)
 
 	if err != nil {
-		fmt.Println("Parse error " + err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
-func RenderTemplateTest(w http.ResponseWriter) (mych map[string]*template.Template, err error) {
+func CreateTemplateCache(w http.ResponseWriter) (mych map[string]*template.Template, err error) {
 
 	mycache := make(map[string]*template.Template)
 
